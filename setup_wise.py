@@ -6,7 +6,7 @@ import sys
 import argparse
 
 def parse_args():
-    parser = ap.ArgumentParser(
+    parser = argparse.ArgumentParser(
         prog="setup_wise.py",
         description="Script to download and extract project vectors and data for a WISE deployment to the EOSC EU Node",
     )
