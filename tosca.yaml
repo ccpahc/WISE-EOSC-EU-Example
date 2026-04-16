@@ -1,0 +1,97 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports:
+  - grycap_custom_types: https://raw.githubusercontent.com/grycap/tosca/main/custom_types.yaml
+
+description: Wise container applitacion
+
+topology_template:
+
+  inputs:
+    cpu:
+      type: float
+      description: Number of virtual cpus for the container
+      default: 2.0
+    memory:
+      type: scalar-unit.size
+      description: Memory size for the container
+      default: 8.0 GB
+
+    data_size:
+      type: scalar-unit.size
+      description: Size of the data Persistent Volume Claim
+      default: 1.0 GB
+    projects_size:
+      type: scalar-unit.size
+      description: Size of the projects Persistent Volume Claim
+      default: 1.0 GB
+    project_name:
+      type: string
+      description: Project Name
+      default: Edis-Photographic-Negatives
+    project_vectors:
+      type: string
+      description: URL of the pre-processed project vectors tarfile
+      default: https://raw.githubusercontent.com/ccpahc/WISE-EOSC-EU-Example/refs/heads/main/vectors.tar.gz
+    project_data:
+      type: string
+      description: URL of the project images/videos/etc tarfile
+      default: https://raw.githubusercontent.com/ccpahc/WISE-EOSC-EU-Example/refs/heads/main/images.tar.gz
+
+    endpoint:
+      type: string
+      description: DNS name to access the WISE instance
+      default: https://wise
+
+  node_templates:
+
+    wise_app:
+      type: tosca.nodes.Container.Application.Docker
+      properties:
+        command:
+          concat:
+            - "python3"
+            - " /install.py "
+            - { get_input: project_vectors }
+            - " "
+            - { get_input: project_data }
+            - " "
+            - { get_input: project_name }
+      requirements:
+        - host: wise_runtime
+      artifacts:
+        my_image:
+          file: registry.gitlab.com/vgg/wise/wise/wise-cpu:latest
+          type: tosca.artifacts.Deployment.Image.Container.Docker
+        install_script:
+          deploy_path: /install.py
+          file: https://raw.githubusercontent.com/ccpahc/WISE-EOSC-EU-Example/refs/heads/main/setup_wise.py
+          type: tosca.artifacts.File
+
+    # The properties of the runtime to host the container
+    wise_runtime:
+      type: tosca.nodes.Container.Runtime.Docker
+      capabilities:
+        host:
+          properties:
+            num_cpus: { get_input: cpu }
+            mem_size: { get_input: memory }
+            publish_ports:
+              - target: 9670
+                endpoint: { get_input: endpoint }
+            volumes:
+              - "data_storage:/wise/data"
+              - "projects_storage:/wise/projects"
+
+    data_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: data_size }
+    projects_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: projects_size }
+
+  outputs:
+    wise_url:
+      value: { concat: [{ get_attribute: [ wise_app, endpoints, 0 ] }, { get_input: project_name }] }
