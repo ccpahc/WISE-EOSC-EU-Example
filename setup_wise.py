@@ -14,9 +14,9 @@ def parse_args():
     #parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
     parser.add_argument("--version", action="version", version="%(prog)s 1.0", help="Show program version number and exit")
     
-    parser.add_argument("vectors-url", type=str, help="URL pointing to the .tar.gz file containing the pre-processed vectors")
-    parser.add_argument("data-url", type=str, help="URL pointing to the .tar.gz file containing the image/video data")
-    parser.add_argument("project-name", type=str, help="Name of the project (also the name of the root folder inside the vectors .tar.gz file)")
+    parser.add_argument("vectors_url", type=str, help="URL pointing to the .tar.gz file containing the pre-processed vectors")
+    parser.add_argument("data_url", type=str, help="URL pointing to the .tar.gz file containing the image/video data")
+    parser.add_argument("project_name", type=str, help="Name of the project (also the name of the root folder inside the vectors .tar.gz file)")
 
     args = parser.parse_args()
 
