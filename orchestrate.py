@@ -55,7 +55,7 @@ def process(args):
     print("Creating vector search index...")
     #subprocess.run(["python3", "create-index.py", "--project-dir", project_dir], cwd="/wise")
 
-    archives_dir = "/archives"
+    archives_dir = "/wise/archives"
     os.makedirs(archives_dir, exist_ok=True)
 
     print("Compressing vectors...")
@@ -73,7 +73,7 @@ def process(args):
         title="WISE EOSC EU example archive server",
     )
 
-    app.mount(archives_dir, StaticFiles(directory=archives_dir), name="archives")
+    app.mount("/archives", StaticFiles(directory=archives_dir), name="archives")
     uvicorn.run(app, host="0.0.0.0", port=9670, log_level="info")
 
 def parse_args():
