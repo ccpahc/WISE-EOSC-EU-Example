@@ -7,6 +7,7 @@ import argparse
 import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+import uvicorn
 
 def serve(args):
     print("Requesting vectors tarfile...")
