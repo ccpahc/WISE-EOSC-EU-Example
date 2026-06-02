@@ -48,7 +48,7 @@ def process(args):
     subprocess.run(["python3", "iiif_downloader.py", "-c", args.iiif_url, "/wise/data"], cwd="/")
 
     project_dir = "/wise/projects/" + args.project_name
-    os.makedirs(project_dir, exist_ok=True)
+    #os.makedirs(project_dir, exist_ok=True)
 
     print("Beginning feature extraction...")
     subprocess.run(["python3", "extract-features.py", "data", "--project-dir", project_dir], cwd="/wise")
