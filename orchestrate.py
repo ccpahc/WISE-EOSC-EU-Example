@@ -43,11 +43,11 @@ def serve(args):
 
 def process(args):
     print("Requesting data iiif collection...")
-    os.makedirs("/wise/data")
+    os.makedirs("/wise/data", exist_ok=True)
     subprocess.run(["python3", "iiif_downloader.py", args.data_url, "/wise/data"], cwd="/")
 
     project_dir = "/wise/projects/" + args.project_name
-    os.makedirs(project_dir)
+    os.makedirs(project_dir, exist_ok=True)
 
     print("Beginning feature extraction...")
     #subprocess.run(["python3", "extract-features.py", "data", "--project-dir", project_dir], cwd="/wise")
@@ -56,7 +56,7 @@ def process(args):
     #subprocess.run(["python3", "create-index.py", "--project-dir", project_dir], cwd="/wise")
 
     archives_dir = "/archives"
-    os.makedirs(archives_dir)
+    os.makedirs(archives_dir, exist_ok=True)
 
     print("Compressing vectors...")
     vector_tarfile = tarfile.open(archives_dir + "/vectors.tar.gz", mode="x:gz")
