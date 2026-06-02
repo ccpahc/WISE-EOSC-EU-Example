@@ -25,7 +25,7 @@ def serve(args):
 
     if args.iiif:
         print("Requesting data iiif collection...")
-        subprocess.run(["python3", "iiif_downloader.py", args.data_url, "/wise/data"], cwd="/")
+        subprocess.run(["python3", "iiif_downloader.py", "-c", args.data_url, "/wise/data"], cwd="/")
     else:
         print("Requesting data tarfile...")
         data_request = requests.get(args.data_url)
@@ -45,7 +45,7 @@ def serve(args):
 def process(args):
     print("Requesting data iiif collection...")
     os.makedirs("/wise/data", exist_ok=True)
-    subprocess.run(["python3", "iiif_downloader.py", args.iiif_url, "/wise/data"], cwd="/")
+    subprocess.run(["python3", "iiif_downloader.py", "-c", args.iiif_url, "/wise/data"], cwd="/")
 
     project_dir = "/wise/projects/" + args.project_name
     os.makedirs(project_dir, exist_ok=True)
