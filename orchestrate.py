@@ -51,10 +51,10 @@ def process(args):
     os.makedirs(project_dir, exist_ok=True)
 
     print("Beginning feature extraction...")
-    #subprocess.run(["python3", "extract-features.py", "data", "--project-dir", project_dir], cwd="/wise")
+    subprocess.run(["python3", "extract-features.py", "data", "--project-dir", project_dir], cwd="/wise")
 
     print("Creating vector search index...")
-    #subprocess.run(["python3", "create-index.py", "--project-dir", project_dir], cwd="/wise")
+    subprocess.run(["python3", "create-index.py", "--project-dir", project_dir], cwd="/wise")
 
     archives_dir = "/wise/archives"
     os.makedirs(archives_dir, exist_ok=True)
