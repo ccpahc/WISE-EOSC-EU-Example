@@ -1,0 +1,106 @@
+
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+imports:
+  - grycap_custom_types: https://raw.githubusercontent.com/grycap/tosca/main/custom_types.yaml
+
+description: Wise container application
+
+metadata:
+  template_name: WISE
+  template_version: "0.0.1"
+  display_name: WISE Deployment
+
+topology_template:
+
+  inputs:
+    cpu:
+      type: float
+      description: Number of virtual cpus for the container
+      default: 2.0
+    memory:
+      type: scalar-unit.size
+      description: Memory size for the container
+      default: 8.0 GB
+    gpu:
+      type: float
+      description: Number of GPUs to request for the container
+      default: 0.0
+
+    data_size:
+      type: scalar-unit.size
+      description: Size of the data Persistent Volume Claim
+      default: 1.0 GB
+    projects_size:
+      type: scalar-unit.size
+      description: Size of the projects Persistent Volume Claim
+      default: 1.0 GB
+    project_name:
+      type: string
+      description: Project Name
+      default: Edis-Photographic-Negatives
+    iiif_url:
+      type: string
+      description: Project Name
+      default: https://
+
+    endpoint:
+      type: string
+      description: DNS name to access the WISE instance
+      default: https://wise
+
+  node_templates:
+
+    wise_app:
+      type: tosca.nodes.Container.Application.Docker
+      properties:
+        command:
+          concat:
+            - "python3"
+            - " /orchestrate.py process_iiif "
+            - { get_input: iiif_url }
+            - " "
+            - { get_input: project_name }
+      requirements:
+        - host: wise_runtime
+      artifacts:
+        my_image:
+          file: registry.gitlab.com/vgg/wise/wise/wise-cpu:latest
+          type: tosca.artifacts.Deployment.Image.Container.Docker
+        orchestrate:
+          deploy_path: /orchestrate.py
+          file: https://github.com/ccpahc/WISE-EOSC-EU-Example/raw/refs/heads/main/orchestrate.py
+          type: tosca.artifacts.File
+        iiif_downloader:
+          deploy_path: /iiif_downloader.py
+          file: "https://raw.githubusercontent.com/ccpahc/iiif_downloader/refs/heads/master/iiif_downloader.py"
+          type: tosca.artifacts.File
+
+    # The properties of the runtime to host the container
+    wise_runtime:
+      type: tosca.nodes.Container.Runtime.Docker
+      capabilities:
+        host:
+          properties:
+            num_cpus: { get_input: cpu }
+            mem_size: { get_input: memory }
+            num_gpus: { get_input: gpu }
+            publish_ports:
+              - target: 9670
+                endpoint: { get_input: endpoint }
+            volumes:
+              - "data_storage:/wise/data"
+              - "projects_storage:/wise/projects"
+
+    data_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: data_size }
+    projects_storage:
+      type: tosca.nodes.BlockStorage
+      properties:
+        size: { get_input: projects_size }
+
+  outputs:
+    wise_url:
+      value: { concat: [{ get_attribute: [ wise_app, endpoints, 0 ] }, { get_input: project_name }] }

@@ -4,6 +4,9 @@ import tarfile
 import subprocess
 import sys
 import argparse
+import os
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 def serve(args):
     print("Requesting vectors tarfile...")
@@ -39,19 +42,51 @@ def serve(args):
     subprocess.run(["python3", "serve.py", "--project-dir", f"projects/{args.project_name}"], cwd="/wise")
 
 def process(args):
-    print("Not implemented yet")
-    exit(0)
+    print("Requesting data iiif collection...")
+    os.makedirs("/wise/data")
+    subprocess.run(["python3", "iiif_downloader.py", args.data_url, "/wise/data"], cwd="/")
+
+    project_dir = "/wise/projects/" + args.project_name
+    os.makedirs(project_dir)
+
+    print("Beginning feature extraction...")
+    #subprocess.run(["python3", "extract-features.py", "data", "--project-dir", project_dir], cwd="/wise")
+
+    print("Creating vector search index...")
+    #subprocess.run(["python3", "create-index.py", "--project-dir", project_dir], cwd="/wise")
+
+    archives_dir = "/archives"
+    os.makedirs(archives_dir)
+
+    print("Compressing vectors...")
+    vector_tarfile = tarfile.open(archives_dir + "/vectors.tar.gz", mode="x:gz")
+    vector_tarfile.add(project_dir, arcname=args.project_name)
+    vector_tarfile.close()
+
+    print("Compressing data...")
+    data_tarfile = tarfile.open(archives_dir + "/data.tar.gz", mode="x:gz")
+    data_tarfile.add("/wise/data", arcname="")
+    data_tarfile.close()
+
+    print("Serving archives...")
+    app = FastAPI(
+        title="WISE EOSC EU example archive server",
+    )
+
+    app.mount(archives_dir, StaticFiles(directory=archives_dir), name="archives")
+    uvicorn.run(app, host="0.0.0.0", port=9670, log_level="info")
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="setup_wise.py",
+        prog="orchestrate.py",
         description="Script to download and extract project vectors and data for a WISE deployment to the EOSC EU Node",
     )
 
     #parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
     parser.add_argument("--version", action="version", version="%(prog)s 1.0", help="Show program version number and exit")
+    subparsers = parser.add_subparsers(required=True)
 
-    serve_parse = parser.add_subparser("serve", help="Retrieve processed .tar.gz files and serve them")
+    serve_parse = subparsers.add_parser("serve", help="Retrieve processed .tar.gz files and serve them")
 
     serve_parse.add_argument("-i", "--iiif", action="store_true", help="If set, the data_url will be interpreted as pointing to an iiif collection instead of a .tar.gz file")
 
@@ -61,7 +96,7 @@ def parse_args():
 
     serve_parse.set_defaults(func=serve)
 
-    process_parse = parser.add_subparser("process_iiif", help="Download data from iiif collection and process it")
+    process_parse = subparsers.add_parser("process_iiif", help="Download data from iiif collection and process it")
 
     process_parse.add_argument("iiif_url", type=str, help="URL pointing to the iiif collection in which the data is stored")
     process_parse.add_argument("project_name", type=str, help="Name of the project (also the name of the root folder inside the resulting vectors .tar.gz file)")
